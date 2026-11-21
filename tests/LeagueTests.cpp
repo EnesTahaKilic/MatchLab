@@ -1,4 +1,5 @@
 #include "League.h"
+#include "Match.h"
 
 #include <stdexcept>
 #include <string>
@@ -55,9 +56,18 @@ void rejectedMatchDoesNotChangeStandings() {
     }
 }
 
+void matchStoresKickoffTime() {
+    Match legacyMatch("Home", "Away", 1, 0);
+    Match datedMatch("Home", "Away", 1, 0, 1790000000);
+
+    require(legacyMatch.getKickoffTime() == 0, "Existing constructor calls should retain the default kickoff");
+    require(datedMatch.getKickoffTime() == 1790000000, "Match should retain its kickoff timestamp");
+}
+
 } // namespace
 
 int main() {
     standingsFollowTieBreakRules();
     rejectedMatchDoesNotChangeStandings();
+    matchStoresKickoffTime();
 }

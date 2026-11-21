@@ -6,11 +6,13 @@
 Match::Match(const std::string& home,
              const std::string& away,
              int homeScore,
-             int awayScore)
+             int awayScore,
+             std::int64_t matchKickoffTime)
     : homeTeam(home),
       awayTeam(away),
       homeGoals(homeScore),
-      awayGoals(awayScore) {
+      awayGoals(awayScore),
+      kickoffTime(matchKickoffTime) {
 
     if (home.empty() || away.empty() || home == away ||
         homeScore < 0 || awayScore < 0) {
@@ -32,6 +34,10 @@ int Match::getHomeGoals() const {
 
 int Match::getAwayGoals() const {
     return awayGoals;
+}
+
+std::int64_t Match::getKickoffTime() const {
+    return kickoffTime;
 }
 
 void Match::display() const {
