@@ -27,11 +27,22 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+If CMake is unavailable, the core tests can be compiled directly with a
+C++17 compiler from the project root:
+
+```sh
+c++ -std=c++17 -Wall -Wextra -Wpedantic -I include \
+    src/Match.cpp src/Team.cpp src/League.cpp tests/LeagueTests.cpp \
+    -o matchlab_tests
+./matchlab_tests
+```
+
 ## Project Status
 
-The C++ core and league standings are implemented. Matches can store both
-kickoff time and the time the result became available. Historical data import,
-prediction models, and evaluation are planned.
+The first core milestone is implemented. It covers match and team validation,
+result statistics, queryable league standings, and stored kickoff and result
+availability times. CSV import, historical analysis, prediction models, and
+model evaluation remain planned work.
 
 ## Goals
 

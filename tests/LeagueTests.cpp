@@ -67,10 +67,70 @@ void matchStoresKickoffTime() {
             "Match should retain when its result became available");
 }
 
+void teamStatisticsCoverWinsDrawsAndLosses() {
+    Team team("Rovers");
+    team.recordMatch(3, 1);
+    team.recordMatch(2, 2);
+    team.recordMatch(0, 1);
+
+    require(team.getPlayed() == 3, "Team should count all recorded matches");
+    require(team.getWins() == 1, "Team should count its win");
+    require(team.getDraws() == 1, "Team should count its draw");
+    require(team.getLosses() == 1, "Team should count its loss");
+    require(team.getGoalsFor() == 5, "Team should total goals scored");
+    require(team.getGoalsAgainst() == 4, "Team should total goals conceded");
+    require(team.getGoalDifference() == 1, "Team should calculate goal difference");
+    require(team.getPoints() == 4, "Team should award three points for a win and one for a draw");
+}
+
+void invalidTeamAndResultInputsAreRejected() {
+    bool emptyNameRejected = false;
+    try {
+        Team team("");
+    } catch (const std::invalid_argument&) {
+        emptyNameRejected = true;
+    }
+    require(emptyNameRejected, "Empty team names should be rejected");
+
+    Team team("Rovers");
+    bool negativeScoreRejected = false;
+    try {
+        team.recordMatch(-1, 0);
+    } catch (const std::invalid_argument&) {
+        negativeScoreRejected = true;
+    }
+    require(negativeScoreRejected, "Negative goals should be rejected");
+    require(team.getPlayed() == 0, "Rejected score should not change team statistics");
+}
+
+void leagueRejectsInvalidTeamRegistration() {
+    League league;
+    league.addTeam("Rovers");
+
+    bool duplicateRejected = false;
+    try {
+        league.addTeam("Rovers");
+    } catch (const std::invalid_argument&) {
+        duplicateRejected = true;
+    }
+    require(duplicateRejected, "Duplicate team names should be rejected");
+
+    bool emptyNameRejected = false;
+    try {
+        league.addTeam("");
+    } catch (const std::invalid_argument&) {
+        emptyNameRejected = true;
+    }
+    require(emptyNameRejected, "Empty team names should be rejected by the league");
+}
+
 } // namespace
 
 int main() {
     standingsFollowTieBreakRules();
     rejectedMatchDoesNotChangeStandings();
     matchStoresKickoffTime();
+    teamStatisticsCoverWinsDrawsAndLosses();
+    invalidTeamAndResultInputsAreRejected();
+    leagueRejectsInvalidTeamRegistration();
 }
