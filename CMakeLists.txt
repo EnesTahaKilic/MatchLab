@@ -23,5 +23,8 @@ include(CTest)
 if(BUILD_TESTING)
     add_executable(matchlab_tests tests/LeagueTests.cpp)
     target_link_libraries(matchlab_tests PRIVATE matchlab_core)
+    target_compile_definitions(matchlab_tests PRIVATE
+        MATCHLAB_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
     add_test(NAME matchlab_tests COMMAND matchlab_tests)
 endif()

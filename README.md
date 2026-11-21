@@ -45,6 +45,19 @@ header `home_team,away_team,home_goals,away_goals,kickoff_time,result_available_
 with kickoff and result availability expressed as Unix timestamps in seconds.
 Historical analysis, prediction models, and model evaluation remain planned.
 
+An example input file is available at `data/matches.csv`. The reader returns
+`std::vector<Match>` and does not add records to a league automatically. For
+example:
+
+```cpp
+#include "CsvMatchReader.h"
+
+#include <fstream>
+
+std::ifstream input("data/matches.csv");
+const std::vector<Match> matches = CsvMatchReader::read(input);
+```
+
 ## Goals
 
 The goal of MatchLab is to build a modular football analysis application

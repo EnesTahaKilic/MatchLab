@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <fstream>
 
 namespace {
 
@@ -153,6 +154,18 @@ void csvReaderHandlesWindowsLineEndingsAndWhitespace() {
             "CSV reader should trim surrounding whitespace");
 }
 
+void csvReaderLoadsRepositorySampleFile() {
+    const std::string path = std::string(MATCHLAB_SOURCE_DIR) + "/data/matches.csv";
+    std::ifstream csv(path);
+    require(static_cast<bool>(csv), "Sample CSV file should be available");
+
+    const auto matches = CsvMatchReader::read(csv);
+    require(matches.size() == 2, "Sample CSV should contain two matches");
+    require(matches[0].getHomeTeam() == "River Plate", "Sample CSV should retain team names");
+    require(matches[1].getHomeGoals() == 0 && matches[1].getAwayGoals() == 0,
+            "Sample CSV should retain a drawn result");
+}
+
 void csvReaderRejectsMalformedInput() {
     std::istringstream badHeader("home,away,score\n");
     bool headerRejected = false;
@@ -187,4 +200,5 @@ int main() {
     csvReaderLoadsMatchAndTimestamps();
     csvReaderHandlesWindowsLineEndingsAndWhitespace();
     csvReaderRejectsMalformedInput();
+    csvReaderLoadsRepositorySampleFile();
 }
