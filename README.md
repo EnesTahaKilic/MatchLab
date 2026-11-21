@@ -5,7 +5,7 @@ teams, and calculating league standings.
 
 ## Features
 
-- Match results with optional kickoff timestamps
+- Match results with optional kickoff and result availability timestamps
 - Team statistics for wins, draws, losses, and goals
 - League standings sorted by points, goal difference, goals scored, then name
 - Automated tests for standings and invalid match handling
@@ -29,7 +29,8 @@ ctest --test-dir build --output-on-failure
 
 ## Project Status
 
-The C++ core and league standings are implemented. Historical data import,
+The C++ core and league standings are implemented. Matches can store both
+kickoff time and the time the result became available. Historical data import,
 prediction models, and evaluation are planned.
 
 ## Goals

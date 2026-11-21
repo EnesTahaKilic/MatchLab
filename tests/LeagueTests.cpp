@@ -59,9 +59,12 @@ void rejectedMatchDoesNotChangeStandings() {
 void matchStoresKickoffTime() {
     Match legacyMatch("Home", "Away", 1, 0);
     Match datedMatch("Home", "Away", 1, 0, 1790000000);
+    Match observedMatch("Home", "Away", 1, 0, 1790000000, 1790007200);
 
     require(legacyMatch.getKickoffTime() == 0, "Existing constructor calls should retain the default kickoff");
     require(datedMatch.getKickoffTime() == 1790000000, "Match should retain its kickoff timestamp");
+    require(observedMatch.getResultAvailableTime() == 1790007200,
+            "Match should retain when its result became available");
 }
 
 } // namespace
