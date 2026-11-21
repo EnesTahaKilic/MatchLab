@@ -13,6 +13,7 @@ add_library(matchlab_core
     src/Match.cpp
     src/Team.cpp
     src/League.cpp
+    src/CsvMatchReader.cpp
 )
 
 target_include_directories(matchlab_core PUBLIC include)

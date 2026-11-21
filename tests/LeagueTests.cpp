@@ -1,6 +1,8 @@
 #include "League.h"
 #include "Match.h"
+#include "CsvMatchReader.h"
 
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -124,6 +126,55 @@ void leagueRejectsInvalidTeamRegistration() {
     require(emptyNameRejected, "Empty team names should be rejected by the league");
 }
 
+void csvReaderLoadsMatchAndTimestamps() {
+    std::istringstream csv(
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\n"
+        "Rovers,City,2,1,1790000000,1790007200\n");
+
+    const auto matches = CsvMatchReader::read(csv);
+    require(matches.size() == 1, "CSV reader should load one match");
+    require(matches[0].getHomeTeam() == "Rovers", "CSV reader should preserve the home team");
+    require(matches[0].getAwayTeam() == "City", "CSV reader should preserve the away team");
+    require(matches[0].getHomeGoals() == 2 && matches[0].getAwayGoals() == 1,
+            "CSV reader should parse the score");
+    require(matches[0].getKickoffTime() == 1790000000, "CSV reader should parse kickoff time");
+    require(matches[0].getResultAvailableTime() == 1790007200,
+            "CSV reader should parse result availability time");
+}
+
+void csvReaderHandlesWindowsLineEndingsAndWhitespace() {
+    std::istringstream csv(
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\r\n"
+        " Rovers , City , 2 , 1 , 1790000000 , 1790007200 \r\n");
+
+    const auto matches = CsvMatchReader::read(csv);
+    require(matches.size() == 1, "CSV reader should handle Windows line endings");
+    require(matches[0].getHomeTeam() == "Rovers" && matches[0].getAwayTeam() == "City",
+            "CSV reader should trim surrounding whitespace");
+}
+
+void csvReaderRejectsMalformedInput() {
+    std::istringstream badHeader("home,away,score\n");
+    bool headerRejected = false;
+    try {
+        CsvMatchReader::read(badHeader);
+    } catch (const std::invalid_argument&) {
+        headerRejected = true;
+    }
+    require(headerRejected, "CSV reader should reject an unexpected header");
+
+    std::istringstream badRow(
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\n"
+        "Rovers,City,two,1,1790000000,1790007200\n");
+    bool rowRejected = false;
+    try {
+        CsvMatchReader::read(badRow);
+    } catch (const std::invalid_argument&) {
+        rowRejected = true;
+    }
+    require(rowRejected, "CSV reader should reject nonnumeric goal values");
+}
+
 } // namespace
 
 int main() {
@@ -133,4 +184,7 @@ int main() {
     teamStatisticsCoverWinsDrawsAndLosses();
     invalidTeamAndResultInputsAreRejected();
     leagueRejectsInvalidTeamRegistration();
+    csvReaderLoadsMatchAndTimestamps();
+    csvReaderHandlesWindowsLineEndingsAndWhitespace();
+    csvReaderRejectsMalformedInput();
 }

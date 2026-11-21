@@ -9,6 +9,7 @@ teams, and calculating league standings.
 - Team statistics for wins, draws, losses, and goals
 - League standings sorted by points, goal difference, goals scored, then name
 - Automated tests for standings and invalid match handling
+- CSV import for completed match results
 
 ## Technologies
 
@@ -39,10 +40,10 @@ c++ -std=c++17 -Wall -Wextra -Wpedantic -I include \
 
 ## Project Status
 
-The first core milestone is implemented. It covers match and team validation,
-result statistics, queryable league standings, and stored kickoff and result
-availability times. CSV import, historical analysis, prediction models, and
-model evaluation remain planned work.
+The C++ core and a basic CSV reader are implemented. The reader expects the
+header `home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time`,
+with kickoff and result availability expressed as Unix timestamps in seconds.
+Historical analysis, prediction models, and model evaluation remain planned.
 
 ## Goals
 
