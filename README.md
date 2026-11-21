@@ -58,6 +58,49 @@ std::ifstream input("data/matches.csv");
 const std::vector<Match> matches = CsvMatchReader::read(input);
 ```
 
+## Learning roadmap
+
+Each day below represents one focused learning session. A session is complete
+when its code, tests, and short review are done. The order can change when a
+session exposes a prerequisite.
+
+### Completed sessions
+
+1. **C++ core and league table** — Match, Team, League, validation, statistics,
+   standings, and initial tests.
+2. **Time-aware match data** — kickoff and result availability timestamps.
+3. **Testable CMake project** — core library, CTest target, and README build steps.
+4. **First CSV reader** — strict six-column input, validation, and sample data.
+
+### Upcoming sessions
+
+5. **Finish the CSV format** — support quoted team names and commas in fields,
+   document malformed-row behavior, and test edge cases.
+6. **Load matches into a League** — preserve timestamps while importing, validate
+   all referenced teams, and make bulk import safe if one row is invalid.
+7. **Standings at a point in time** — calculate results using only matches whose
+   result was available by the requested timestamp. Test the exact cutoff.
+8. **Home and away statistics** — expose separate scoring and conceding totals
+   and cover teams with few or no matches.
+9. **Recent form** — calculate a defined recent-match window in chronological
+   order and test matches tied at the cutoff.
+10. **Historical CSV dataset** — select a consistent source format, import a
+    small real dataset, and check row counts and data quality.
+11. **Baseline goal model** — calculate home and away expected goals from past
+    data, with no information after the prediction time included.
+12. **Outcome probabilities** — derive home win, draw, and away win estimates
+    from a simple statistical model and verify probabilities sum to one.
+13. **Chronological evaluation** — split historical matches by time and report
+    log loss and Brier score against a simple baseline.
+14. **Prediction interface** — let a user select a fixture and show probabilities,
+    expected goals, and a brief explanation of available data.
+15. **External data API** — investigate provider terms and data shape, then add
+    an optional importer without coupling the core model to one service.
+
+At the start of a session, review the day's goal and concepts. At the end, run
+the tests, summarize the design decisions, and commit a few related completed
+sessions together when they form a coherent change.
+
 ## Goals
 
 The goal of MatchLab is to build a modular football analysis application
