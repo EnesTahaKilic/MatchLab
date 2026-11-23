@@ -80,13 +80,14 @@ session exposes a prerequisite.
    quoting is rejected with a line number.
 6. **League import** — imported matches preserve both timestamps, update team
    statistics, and are applied atomically when validation fails.
+7. **Time-aware standings** — results are included only at or before their
+   result availability timestamp; records with timestamp `0` are treated as
+   unknown and excluded from historical standings.
+8. **Home and away statistics** — team totals now preserve match venue and
+   remain correct in both current and time-filtered standings.
 
 ### Upcoming sessions
 
-7. **Standings at a point in time** — calculate results using only matches whose
-   result was available by the requested timestamp. Test the exact cutoff.
-8. **Home and away statistics** — expose separate scoring and conceding totals
-   and cover teams with few or no matches.
 9. **Recent form** — calculate a defined recent-match window in chronological
    order and test matches tied at the cutoff.
 10. **Historical CSV dataset** — select a consistent source format, import a

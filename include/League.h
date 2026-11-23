@@ -32,6 +32,7 @@ public:
     void displayMatches() const;
     std::vector<Match> getMatches() const;
     std::vector<Team> getStandings() const;
+    std::vector<Team> getStandings(std::int64_t asOfTime) const;
     void displayStandings() const;
 };
 

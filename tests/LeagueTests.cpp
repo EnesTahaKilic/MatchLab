@@ -252,6 +252,80 @@ void leagueMatchImportIsAtomicOnUnknownTeam() {
             "Failed import should leave every team's points unchanged");
 }
 
+void standingsUseOnlyResultsAvailableByTimestamp() {
+    League league;
+    league.addTeam("Home");
+    league.addTeam("Away");
+    league.addTeam("Third");
+
+    const std::vector<Match> matches = {
+        Match("Home", "Away", 2, 0, 10, 100),
+        Match("Away", "Third", 1, 1, 110, 200),
+        Match("Third", "Home", 3, 0, 210, 300),
+        Match("Home", "Third", 5, 0)
+    };
+    league.addMatches(matches);
+
+    const auto beforeFirstResult = league.getStandings(99);
+    require(beforeFirstResult[0].getPlayed() == 0,
+            "No result should be counted before the first availability time");
+
+    const auto atFirstResult = league.getStandings(100);
+    require(atFirstResult[0].getName() == "Home" && atFirstResult[0].getPoints() == 3,
+            "A result should be counted at its exact availability time");
+    require(atFirstResult[1].getPlayed() == 0,
+            "Later results and results without an availability timestamp should be excluded");
+
+    const auto beforeSecondResult = league.getStandings(199);
+    require(beforeSecondResult[1].getPlayed() == 0,
+            "A result should not be counted before it becomes available");
+
+    const auto atSecondResult = league.getStandings(200);
+    require(atSecondResult[1].getPlayed() == 1,
+            "The result should be counted at the inclusive cutoff");
+
+    const auto currentStandings = league.getStandings();
+    require(currentStandings[0].getPlayed() == 3,
+            "The existing standings query should continue to include all recorded matches");
+}
+
+void standingsRejectNegativeTimestamp() {
+    League league;
+    bool rejected = false;
+    try {
+        league.getStandings(-1);
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    }
+    require(rejected, "Negative as-of timestamps should be rejected");
+}
+
+void leagueTracksHomeAndAwayPerformanceSeparately() {
+    League league;
+    league.addTeam("Home");
+    league.addTeam("Away");
+    league.addMatch("Home", "Away", 2, 1, 10, 20);
+    league.addMatch("Away", "Home", 0, 0, 30, 40);
+
+    const auto standings = league.getStandings();
+    const Team& home = standings[0].getName() == "Home" ? standings[0] : standings[1];
+    const Team& away = standings[0].getName() == "Away" ? standings[0] : standings[1];
+
+    require(home.getHomePlayed() == 1 && home.getAwayPlayed() == 1,
+            "League should separate a team's home and away match counts");
+    require(home.getHomeGoalsFor() == 2 && home.getHomeGoalsAgainst() == 1,
+            "League should track goals in the home role");
+    require(home.getAwayGoalsFor() == 0 && home.getAwayGoalsAgainst() == 0,
+            "League should track goals in the away role");
+    require(away.getHomeGoalsFor() == 0 && away.getAwayGoalsFor() == 1,
+            "League should assign each score to the correct venue role");
+
+    const auto historical = league.getStandings(40);
+    const Team& historicalHome = historical[0].getName() == "Home" ? historical[0] : historical[1];
+    require(historicalHome.getHomePlayed() == 1 && historicalHome.getAwayPlayed() == 1,
+            "Historical standings should also preserve venue-specific counts");
+}
+
 void csvReaderRejectsMalformedInput() {
     std::istringstream badHeader("home,away,score\n");
     bool headerRejected = false;
@@ -291,4 +365,7 @@ int main() {
     csvReaderLoadsRepositorySampleFile();
     leagueImportsMatchesAndPreservesTimestamps();
     leagueMatchImportIsAtomicOnUnknownTeam();
+    standingsUseOnlyResultsAvailableByTimestamp();
+    standingsRejectNegativeTimestamp();
+    leagueTracksHomeAndAwayPerformanceSeparately();
 }

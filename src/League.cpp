@@ -5,6 +5,26 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace {
+
+void sortStandings(std::vector<Team>& teams) {
+    std::sort(teams.begin(), teams.end(),
+              [](const Team& a, const Team& b) {
+        if (a.getPoints() != b.getPoints()) {
+            return a.getPoints() > b.getPoints();
+        }
+        if (a.getGoalDifference() != b.getGoalDifference()) {
+            return a.getGoalDifference() > b.getGoalDifference();
+        }
+        if (a.getGoalsFor() != b.getGoalsFor()) {
+            return a.getGoalsFor() > b.getGoalsFor();
+        }
+        return a.getName() < b.getName();
+    });
+}
+
+} // namespace
+
 Team* League::findTeam(const std::string& name) {
     for (Team& team : teams) {
         if (team.getName() == name) {
@@ -47,8 +67,8 @@ void League::addMatch(const std::string& home,
 
     matches.push_back(match);
 
-    homeTeam->recordMatch(homeGoals, awayGoals);
-    awayTeam->recordMatch(awayGoals, homeGoals);
+    homeTeam->recordHomeMatch(homeGoals, awayGoals);
+    awayTeam->recordAwayMatch(awayGoals, homeGoals);
 }
 
 void League::addMatches(const std::vector<Match>& newMatches) {
@@ -74,8 +94,8 @@ void League::addMatches(const std::vector<Match>& newMatches) {
                 awayTeam = &team;
             }
         }
-        homeTeam->recordMatch(match.getHomeGoals(), match.getAwayGoals());
-        awayTeam->recordMatch(match.getAwayGoals(), match.getHomeGoals());
+        homeTeam->recordHomeMatch(match.getHomeGoals(), match.getAwayGoals());
+        awayTeam->recordAwayMatch(match.getAwayGoals(), match.getHomeGoals());
     }
 
     teams.swap(updatedTeams);
@@ -99,25 +119,43 @@ std::vector<Match> League::getMatches() const {
 
 std::vector<Team> League::getStandings() const {
     std::vector<Team> sortedTeams = teams;
-
-    std::sort(sortedTeams.begin(), sortedTeams.end(),
-              [](const Team& a, const Team& b) {
-        if (a.getPoints() != b.getPoints()) {
-            return a.getPoints() > b.getPoints();
-        }
-
-        if (a.getGoalDifference() != b.getGoalDifference()) {
-            return a.getGoalDifference() > b.getGoalDifference();
-        }
-
-        if (a.getGoalsFor() != b.getGoalsFor()) {
-            return a.getGoalsFor() > b.getGoalsFor();
-        }
-
-        return a.getName() < b.getName();
-    });
-
+    sortStandings(sortedTeams);
     return sortedTeams;
+}
+
+std::vector<Team> League::getStandings(std::int64_t asOfTime) const {
+    if (asOfTime < 0) {
+        throw std::invalid_argument("Standings timestamp cannot be negative");
+    }
+
+    std::vector<Team> standings;
+    standings.reserve(teams.size());
+    for (const Team& team : teams) {
+        standings.emplace_back(team.getName());
+    }
+
+    for (const Match& match : matches) {
+        const std::int64_t availableAt = match.getResultAvailableTime();
+        if (availableAt == 0 || availableAt > asOfTime) {
+            continue;
+        }
+
+        Team* homeTeam = nullptr;
+        Team* awayTeam = nullptr;
+        for (Team& team : standings) {
+            if (team.getName() == match.getHomeTeam()) {
+                homeTeam = &team;
+            }
+            if (team.getName() == match.getAwayTeam()) {
+                awayTeam = &team;
+            }
+        }
+        homeTeam->recordHomeMatch(match.getHomeGoals(), match.getAwayGoals());
+        awayTeam->recordAwayMatch(match.getAwayGoals(), match.getHomeGoals());
+    }
+
+    sortStandings(standings);
+    return standings;
 }
 
 void League::displayStandings() const {

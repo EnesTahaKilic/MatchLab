@@ -12,11 +12,31 @@ Team::Team(const std::string& teamName)
       losses(0),
       goalsFor(0),
       goalsAgainst(0),
-      points(0) {
+      points(0),
+      homePlayed(0),
+      awayPlayed(0),
+      homeGoalsFor(0),
+      homeGoalsAgainst(0),
+      awayGoalsFor(0),
+      awayGoalsAgainst(0) {
 
     if (teamName.empty()) {
         throw std::invalid_argument("Team name cannot be empty");
     }
+}
+
+void Team::recordHomeMatch(int scored, int conceded) {
+    recordMatch(scored, conceded);
+    ++homePlayed;
+    homeGoalsFor += scored;
+    homeGoalsAgainst += conceded;
+}
+
+void Team::recordAwayMatch(int scored, int conceded) {
+    recordMatch(scored, conceded);
+    ++awayPlayed;
+    awayGoalsFor += scored;
+    awayGoalsAgainst += conceded;
 }
 
 void Team::recordMatch(int scored, int conceded) {
@@ -75,6 +95,30 @@ int Team::getGoalDifference() const {
 
 int Team::getPoints() const {
     return points;
+}
+
+int Team::getHomePlayed() const {
+    return homePlayed;
+}
+
+int Team::getAwayPlayed() const {
+    return awayPlayed;
+}
+
+int Team::getHomeGoalsFor() const {
+    return homeGoalsFor;
+}
+
+int Team::getHomeGoalsAgainst() const {
+    return homeGoalsAgainst;
+}
+
+int Team::getAwayGoalsFor() const {
+    return awayGoalsFor;
+}
+
+int Team::getAwayGoalsAgainst() const {
+    return awayGoalsAgainst;
 }
 
 void Team::display() const {
