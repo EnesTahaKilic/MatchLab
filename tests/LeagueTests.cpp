@@ -154,6 +154,40 @@ void csvReaderHandlesWindowsLineEndingsAndWhitespace() {
             "CSV reader should trim surrounding whitespace");
 }
 
+void csvReaderParsesQuotedFields() {
+    std::istringstream csv(
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\n"
+        "\"River Plate, Reserves\",\"The \"\"Reds\"\"\",1,0,1790000000,1790007200\n");
+
+    const auto matches = CsvMatchReader::read(csv);
+    require(matches.size() == 1, "CSV reader should parse a quoted row");
+    require(matches[0].getHomeTeam() == "River Plate, Reserves",
+            "CSV reader should keep commas inside quoted team names");
+    require(matches[0].getAwayTeam() == "The \"Reds\"",
+            "CSV reader should decode escaped quotes");
+}
+
+void csvReaderRejectsMalformedQuotes() {
+    const std::string header =
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\n";
+    const std::string badRows[] = {
+        "\"Unclosed,City,1,0,1790000000,1790007200\n",
+        "Rovers\" FC,City,1,0,1790000000,1790007200\n",
+        "\"Rovers\" FC,City,1,0,1790000000,1790007200\n"
+    };
+
+    for (const std::string& row : badRows) {
+        std::istringstream csv(header + row);
+        bool rejected = false;
+        try {
+            CsvMatchReader::read(csv);
+        } catch (const std::invalid_argument&) {
+            rejected = true;
+        }
+        require(rejected, "CSV reader should reject malformed quoted fields");
+    }
+}
+
 void csvReaderLoadsRepositorySampleFile() {
     const std::string path = std::string(MATCHLAB_SOURCE_DIR) + "/data/matches.csv";
     std::ifstream csv(path);
@@ -164,6 +198,58 @@ void csvReaderLoadsRepositorySampleFile() {
     require(matches[0].getHomeTeam() == "River Plate", "Sample CSV should retain team names");
     require(matches[1].getHomeGoals() == 0 && matches[1].getAwayGoals() == 0,
             "Sample CSV should retain a drawn result");
+}
+
+void leagueImportsMatchesAndPreservesTimestamps() {
+    League league;
+    league.addTeam("River Plate");
+    league.addTeam("San Lorenzo");
+
+    std::istringstream csv(
+        "home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time\n"
+        "River Plate,San Lorenzo,2,1,1790000000,1790007200\n");
+    const auto matches = CsvMatchReader::read(csv);
+    league.addMatches(matches);
+
+    const auto storedMatches = league.getMatches();
+    require(storedMatches.size() == 1, "League should store the imported match");
+    require(storedMatches[0].getKickoffTime() == 1790000000,
+            "League should preserve the imported kickoff timestamp");
+    require(storedMatches[0].getResultAvailableTime() == 1790007200,
+            "League should preserve result availability");
+
+    const auto standings = league.getStandings();
+    require(standings[0].getPoints() == 3, "League import should update standings");
+}
+
+void leagueMatchImportIsAtomicOnUnknownTeam() {
+    League league;
+    league.addTeam("Rovers");
+    league.addTeam("City");
+    league.addMatch("Rovers", "City", 1, 0);
+    const auto beforeStandings = league.getStandings();
+    const auto beforeMatches = league.getMatches();
+
+    const std::vector<Match> imported = {
+        Match("Rovers", "City", 0, 1, 1790000000, 1790003600),
+        Match("Rovers", "Unknown", 2, 0, 1790007200, 1790010800)
+    };
+
+    bool rejected = false;
+    try {
+        league.addMatches(imported);
+    } catch (const std::invalid_argument&) {
+        rejected = true;
+    }
+    require(rejected, "Import should reject matches with an unknown team");
+
+    const auto afterStandings = league.getStandings();
+    const auto afterMatches = league.getMatches();
+    require(afterMatches.size() == beforeMatches.size(), "Failed import should add no match rows");
+    require(afterStandings[0].getPoints() == beforeStandings[0].getPoints(),
+            "Failed import should leave standings unchanged");
+    require(afterStandings[1].getPoints() == beforeStandings[1].getPoints(),
+            "Failed import should leave every team's points unchanged");
 }
 
 void csvReaderRejectsMalformedInput() {
@@ -199,6 +285,10 @@ int main() {
     leagueRejectsInvalidTeamRegistration();
     csvReaderLoadsMatchAndTimestamps();
     csvReaderHandlesWindowsLineEndingsAndWhitespace();
+    csvReaderParsesQuotedFields();
+    csvReaderRejectsMalformedQuotes();
     csvReaderRejectsMalformedInput();
     csvReaderLoadsRepositorySampleFile();
+    leagueImportsMatchesAndPreservesTimestamps();
+    leagueMatchImportIsAtomicOnUnknownTeam();
 }

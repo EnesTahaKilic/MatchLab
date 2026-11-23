@@ -40,9 +40,14 @@ c++ -std=c++17 -Wall -Wextra -Wpedantic -I include \
 
 ## Project Status
 
-The C++ core and a basic CSV reader are implemented. The reader expects the
+The C++ core and a CSV reader are implemented. The reader expects the
 header `home_team,away_team,home_goals,away_goals,kickoff_time,result_available_time`,
 with kickoff and result availability expressed as Unix timestamps in seconds.
+Team names may be quoted when they contain commas. A quote inside a quoted
+name is written twice, for example `"The ""Reds"""`. Each non-empty data row
+must contain exactly six fields. Invalid headers, scores, timestamps, and
+malformed quoted fields cause `std::invalid_argument`, and no partial vector
+is returned.
 Historical analysis, prediction models, and model evaluation remain planned.
 
 An example input file is available at `data/matches.csv`. The reader returns
@@ -71,13 +76,13 @@ session exposes a prerequisite.
 2. **Time-aware match data** — kickoff and result availability timestamps.
 3. **Testable CMake project** — core library, CTest target, and README build steps.
 4. **First CSV reader** — strict six-column input, validation, and sample data.
+5. **CSV quoting** — team names can contain commas and escaped quotes; malformed
+   quoting is rejected with a line number.
+6. **League import** — imported matches preserve both timestamps, update team
+   statistics, and are applied atomically when validation fails.
 
 ### Upcoming sessions
 
-5. **Finish the CSV format** — support quoted team names and commas in fields,
-   document malformed-row behavior, and test edge cases.
-6. **Load matches into a League** — preserve timestamps while importing, validate
-   all referenced teams, and make bulk import safe if one row is invalid.
 7. **Standings at a point in time** — calculate results using only matches whose
    result was available by the requested timestamp. Test the exact cutoff.
 8. **Home and away statistics** — expose separate scoring and conceding totals

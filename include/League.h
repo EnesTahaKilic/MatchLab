@@ -6,6 +6,7 @@
 #include "Team.h"
 #include <string>
 #include <vector>
+#include <cstdint>
 
 class League {
 private:
@@ -20,8 +21,16 @@ public:
                   const std::string& away,
                   int homeGoals,
                   int awayGoals);
+    void addMatch(const std::string& home,
+                  const std::string& away,
+                  int homeGoals,
+                  int awayGoals,
+                  std::int64_t kickoffTime,
+                  std::int64_t resultAvailableTime);
+    void addMatches(const std::vector<Match>& matches);
 
     void displayMatches() const;
+    std::vector<Match> getMatches() const;
     std::vector<Team> getStandings() const;
     void displayStandings() const;
 };

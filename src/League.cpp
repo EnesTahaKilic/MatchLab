@@ -26,8 +26,17 @@ void League::addMatch(const std::string& home,
                       const std::string& away,
                       int homeGoals,
                       int awayGoals) {
+    addMatch(home, away, homeGoals, awayGoals, 0, 0);
+}
+
+void League::addMatch(const std::string& home,
+                      const std::string& away,
+                      int homeGoals,
+                      int awayGoals,
+                      std::int64_t kickoffTime,
+                      std::int64_t resultAvailableTime) {
     // Validate the match before changing league data.
-    Match match(home, away, homeGoals, awayGoals);
+    Match match(home, away, homeGoals, awayGoals, kickoffTime, resultAvailableTime);
 
     Team* homeTeam = findTeam(home);
     Team* awayTeam = findTeam(away);
@@ -42,6 +51,37 @@ void League::addMatch(const std::string& home,
     awayTeam->recordMatch(awayGoals, homeGoals);
 }
 
+void League::addMatches(const std::vector<Match>& newMatches) {
+    for (const Match& match : newMatches) {
+        if (findTeam(match.getHomeTeam()) == nullptr || findTeam(match.getAwayTeam()) == nullptr) {
+            throw std::invalid_argument("Team not found in imported match");
+        }
+    }
+
+    std::vector<Team> updatedTeams = teams;
+    std::vector<Match> updatedMatches = matches;
+    updatedMatches.reserve(updatedMatches.size() + newMatches.size());
+    updatedMatches.insert(updatedMatches.end(), newMatches.begin(), newMatches.end());
+
+    for (const Match& match : newMatches) {
+        Team* homeTeam = nullptr;
+        Team* awayTeam = nullptr;
+        for (Team& team : updatedTeams) {
+            if (team.getName() == match.getHomeTeam()) {
+                homeTeam = &team;
+            }
+            if (team.getName() == match.getAwayTeam()) {
+                awayTeam = &team;
+            }
+        }
+        homeTeam->recordMatch(match.getHomeGoals(), match.getAwayGoals());
+        awayTeam->recordMatch(match.getAwayGoals(), match.getHomeGoals());
+    }
+
+    teams.swap(updatedTeams);
+    matches.swap(updatedMatches);
+}
+
 void League::displayMatches() const {
     if (matches.empty()) {
         std::cout << "No matches recorded.\n";
@@ -51,6 +91,10 @@ void League::displayMatches() const {
     for (const Match& match : matches) {
         match.display();
     }
+}
+
+std::vector<Match> League::getMatches() const {
+    return matches;
 }
 
 std::vector<Team> League::getStandings() const {

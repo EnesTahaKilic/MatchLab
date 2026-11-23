@@ -38,19 +38,52 @@ std::int64_t parseInteger(const std::string& value, std::size_t lineNumber) {
     return parsed;
 }
 
-std::vector<std::string> splitLine(const std::string& line) {
+std::vector<std::string> parseCsvLine(const std::string& line, std::size_t lineNumber) {
     std::vector<std::string> fields;
-    std::istringstream stream(line);
     std::string field;
+    bool insideQuotes = false;
+    bool quotedFieldClosed = false;
+    bool fieldWasQuoted = false;
 
-    while (std::getline(stream, field, ',')) {
-        fields.push_back(field);
+    for (std::size_t i = 0; i < line.size(); ++i) {
+        const char character = line[i];
+
+        if (character == '"') {
+            if (insideQuotes && i + 1 < line.size() && line[i + 1] == '"') {
+                field.push_back('"');
+                ++i;
+            } else if (!insideQuotes && trim(field).empty() && !quotedFieldClosed) {
+                field.clear();
+                insideQuotes = true;
+                fieldWasQuoted = true;
+            } else if (insideQuotes) {
+                insideQuotes = false;
+                quotedFieldClosed = true;
+            } else {
+                throw std::invalid_argument("Unexpected quote on CSV line " + std::to_string(lineNumber));
+            }
+        } else if (character == ',' && !insideQuotes) {
+            fields.push_back(fieldWasQuoted ? std::move(field) : trim(std::move(field)));
+            field.clear();
+            quotedFieldClosed = false;
+            fieldWasQuoted = false;
+        } else {
+            if (quotedFieldClosed) {
+                if (!std::isspace(static_cast<unsigned char>(character))) {
+                    throw std::invalid_argument("Unexpected content after quoted field on CSV line " +
+                                                std::to_string(lineNumber));
+                }
+            } else {
+                field.push_back(character);
+            }
+        }
     }
 
-    if (!line.empty() && line.back() == ',') {
-        fields.emplace_back();
+    if (insideQuotes) {
+        throw std::invalid_argument("Unclosed quoted field on CSV line " + std::to_string(lineNumber));
     }
 
+    fields.push_back(fieldWasQuoted ? std::move(field) : trim(std::move(field)));
     return fields;
 }
 
@@ -73,13 +106,9 @@ std::vector<Match> CsvMatchReader::read(std::istream& input) {
             continue;
         }
 
-        std::vector<std::string> fields = splitLine(line);
+        const std::vector<std::string> fields = parseCsvLine(line, lineNumber);
         if (fields.size() != 6) {
             throw std::invalid_argument("Expected six CSV columns on line " + std::to_string(lineNumber));
-        }
-
-        for (std::string& field : fields) {
-            field = trim(std::move(field));
         }
 
         const std::int64_t homeGoals = parseInteger(fields[2], lineNumber);
